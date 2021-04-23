@@ -225,9 +225,14 @@ inline uint64_t clock_cycles() {
         );
     return ((uint64_t)hi << 32) | lo;
 #elif defined(__aarch64__)
-    uint32 pmccntr;
-    uint32 pmuseren;
-    uint32 pmcntenset;
+  uint64_t virtual_timer_value;
+  asm volatile("mrs %0, cntvct_el0" : "=r"(virtual_timer_value));
+  return virtual_timer_value;
+#elif defined(__ARM_ARCH)
+#if (__ARM_ARCH >= 6)
+    unsigned int pmccntr;
+    unsigned int pmuseren;
+    unsigned int pmcntenset;
     // Read the user mode perf monitor counter access permissions.
     asm volatile ("mrc p15, 0, %0, c9, c14, 0" : "=r" (pmuseren));
     if (pmuseren & 1) {  // Allows reading perfmon counters for user mode code.
@@ -235,9 +240,10 @@ inline uint64_t clock_cycles() {
       if (pmcntenset & 0x80000000ul) {  // Is it counting?
         asm volatile ("mrc p15, 0, %0, c9, c13, 0" : "=r" (pmccntr));
         // The counter is set up to count every 64th cycle
-        return static_cast<int64>(pmccntr) * 64;  // Should optimize to << 6
+        return static_cast<uint64_t>(pmccntr) * 64;  // Should optimize to << 6
       }
     }
+#endif
 #endif
 }
 extern int64_t read_invariant_cpu_frequency();
