@@ -21,7 +21,7 @@
 #include <stdio.h>
 #include <stddef.h>
 
-#if defined(__GNUC__) || defined(__APPLE__)
+#if defined(__GNUC__) || (defined(__APPLE__) && (defined (__i386__) || defined (__x86_64__)))
 
     #define BTHREAD_CONTEXT_COMPILER_gcc
 
